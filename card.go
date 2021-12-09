@@ -57,6 +57,10 @@ type Card struct {
 		Due                *time.Time `json:"due,omitempty"`
 	} `json:"badges"`
 
+	Cover struct {
+		Color string `json:"color"`
+	} `json:"cover"`
+
 	// Actions
 	Actions ActionCollection `json:"actions,omitempty"`
 

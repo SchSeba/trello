@@ -6,11 +6,13 @@
 package trello
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/pkg/errors"
@@ -131,6 +133,38 @@ func (c *Client) Put(path string, args Arguments, target interface{}) error {
 	return c.do(req, url, target)
 }
 
+// Put takes a path, Arguments, and a target interface (e.g. Board or Card).
+// It runs a PUT request on the Trello API endpoint with the path and uses
+// the Arguments as URL parameters. Then it returns either the target interface
+// updated from the response or an error.
+func (c *Client) PutPayload(path string, target interface{}, payload []byte) error {
+
+	// Trello prohibits more than 10 seconds/second per token
+	c.Throttle()
+
+	params := url.Values{}
+	c.log("[trello] PUT %s?%s", path, params.Encode())
+
+	if c.Key != "" {
+		params.Set("key", c.Key)
+	}
+
+	if c.Token != "" {
+		params.Set("token", c.Token)
+	}
+
+	urlStr := fmt.Sprintf("%s/%s", c.BaseURL, path)
+	urlWithParams := fmt.Sprintf("%s?%s", urlStr, params.Encode())
+
+	req, err := http.NewRequest("PUT", urlWithParams, bytes.NewBuffer(payload))
+	if err != nil {
+		return errors.Wrapf(err, "Invalid PUT request %s", urlStr)
+	}
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+
+	return c.do(req, urlStr, target)
+}
+
 // Post takes a path, Arguments, and a target interface (e.g. Board or Card).
 // It runs a POST request on the Trello API endpoint with the path and uses
 // the Arguments as URL parameters. Then it returns either the target interface
@@ -218,3 +252,4 @@ func (c *Client) do(req *http.Request, url string, target interface{}) error {
 	}
 	return nil
 }
+

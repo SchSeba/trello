@@ -246,6 +246,12 @@ func (c *Card) Update(extraArgs ...Arguments) error {
 	return c.client.Put(path, args, c)
 }
 
+// UpdateCover UPDATEs the card's Cover color.
+func (c *Card) UpdateCover(payload []byte) error {
+	path := fmt.Sprintf("cards/%s", c.ID)
+	return c.client.PutPayload(path, c, payload)
+}
+
 // Archive archives the card.
 func (c *Card) Archive() error {
 	return c.Update(Arguments{"closed": "true"})
@@ -561,3 +567,4 @@ func earliestCardID(cards []*Card) string {
 	}
 	return earliest
 }
+
